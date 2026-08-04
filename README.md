@@ -6,6 +6,29 @@ and CloudWatch observability — patterns common in fintech payment processing s
 
 ## Architecture
 
+```
+API / CLI
+    │
+    ▼
+Lambda (producer)
+    │  publishes order event
+    ▼
+SNS Topic (order-events)
+    │
+    ├──────────────────────┐
+    ▼                      ▼
+SQS (processing-queue)   SQS (notification-queue)
+    │                      │
+    ▼                      ▼
+Lambda (processor)       Lambda (notifier)
+    │                      │
+    ▼ on failure (×3)      ▼ on failure (×3)
+SQS (processing-dlq)     SQS (notification-dlq)
+    │                      │
+    ▼                      ▼
+CloudWatch Alarm         CloudWatch Alarm
+```
+
 ## Stack
 
 - **Messaging:** AWS SNS, AWS SQS (standard queues + DLQ)
@@ -30,6 +53,26 @@ producer can only `sns:Publish`, processor and notifier can only
 on their respective queues.
 
 ## Project Structure
+
+```
+aws-event-driven-orders/
+├── terraform/
+│ ├── provider.tf # AWS provider, required versions
+│ ├── variables.tf # project_name, environment, region
+│ ├── s3.tf # Lambda artifact bucket
+│ ├── sns.tf # SNS topic
+│ ├── sqs.tf # queues, DLQs, redrive policies, SNS subscriptions
+│ ├── iam.tf # Lambda execution roles, inline policies
+│ ├── lambda.tf # Lambda functions, S3 upload, event source mappings
+│ └── cloudwatch.tf # DLQ depth alarms, Lambda error alarms
+├── lambdas/
+│ ├── producer/ # receives HTTP payload, publishes to SNS
+│ ├── processor/ # consumes from processing-queue, validates order
+│ └── notifier/ # consumes from notification-queue, sends notification
+└── docs/
+├── adrs/ # Architecture Decision Records
+└── incidents/ # Documented failure scenarios
+```
 
 ## Deployment
 
