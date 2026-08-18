@@ -112,6 +112,7 @@ aws sqs get-queue-attributes \
 ## Incidents
 
 - [INC-001 — DLQ routing on invalid order amount](docs/incidents/incident-001-dlq-invalid-amount.md)
+- [INC-002 — Terraform provider binary committed to git history](docs/incidents/incident-002-git-history-bloat.md)
 
 ## Teardown
 
